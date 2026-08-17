@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "639965948137",
+    "project_id": "libraspace-cc7da",
+    "storage_bucket": "libraspace-cc7da.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639965948137:android:150fe94567b51b7ec56878",
+        "android_client_info": {
+          "package_name": "com.example.libraspace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjYTeWO-REPR1Tj5JbuygIj13-AMQ5-Pc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
