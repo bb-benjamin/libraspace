@@ -259,12 +259,29 @@ class FirebaseService {
     });
   }
 
-  Future<void> deleteAccount(String userId) async {
-    // Delete user profile from Firestore
+  Future<void> deleteAccount({
+    required String userId,
+    required String password,
+  }) async {
+    final user = _auth.currentUser;
+
+    if (user == null || user.email == null) {
+      throw Exception('No signed-in user was found.');
+    }
+
+    // Re-authenticate the user using email + password.
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: password,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+
+    // Now it is safe to remove the Firestore profile.
     await _db.collection('users').doc(userId).delete();
 
-    // Delete the Firebase Auth account
-    await _auth.currentUser?.delete();
+    // Finally delete the Firebase Authentication account.
+    await user.delete();
   }
 
   // Get one user's visit history as a live stream (newest first).

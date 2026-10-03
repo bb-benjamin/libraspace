@@ -157,7 +157,7 @@ class AuthProvider extends ChangeNotifier {
     // app.dart switches back to WelcomeScreen on its own.
   }
 
-  Future<bool> deleteAccount() async {
+  Future<bool> deleteAccount(String password) async {
     _isBusy = true;
     _errorText = null;
     notifyListeners();
@@ -166,13 +166,21 @@ class AuthProvider extends ChangeNotifier {
       final String userId = _currentUser?.uid ?? '';
       if (userId.isEmpty) return false;
 
-      await _service.deleteAccount(userId);
+      await _service.deleteAccount(userId: userId, password: password);
       _currentUser = null;
       _status = AuthStatus.loggedOut;
       return true;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        _errorText =
+            'For security, please sign out, sign back in, then delete your account immediately.';
+      } else {
+        _errorText =
+            'Could not delete account. Firebase error: ${e.code} - ${e.message ?? 'Unknown error'}';
+      }
+      return false;
     } catch (e) {
-      _errorText =
-          'Could not delete account. Please sign out and sign in again before deleting.';
+      _errorText = 'Could not delete account: $e';
       return false;
     } finally {
       _isBusy = false;

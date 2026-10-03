@@ -110,24 +110,60 @@ class SettingsScreen extends StatelessWidget {
 }
 
 void _showDeleteConfirmation(BuildContext context, AuthProvider auth) {
+  final TextEditingController passwordController = TextEditingController();
+
   showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
       title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
-      content: const Text(
-        'Are you sure you want to delete your account? '
-        'This action cannot be undone. '
-        'All your data will be permanently deleted.',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Are you sure you want to delete your account? '
+            'This action cannot be undone. '
+            'All your data will be permanently deleted.',
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'Enter your password',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(ctx),
+          onPressed: () {
+            passwordController.dispose();
+            Navigator.pop(ctx);
+          },
           child: const Text('Cancel'),
         ),
         TextButton(
           onPressed: () async {
+            final password = passwordController.text.trim();
+
+            if (password.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please enter your password.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+
             Navigator.pop(ctx);
-            final bool success = await auth.deleteAccount();
+
+            final bool success = await auth.deleteAccount(password);
+
+            passwordController.dispose();
+
             if (!success && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
