@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    match /users/{userId} {
+      allow create: if isSignedIn()
+                    && request.auth.uid == userId;
+
+      allow read: if isSignedIn()
+                  && request.auth.uid == userId;
+
+      allow update: if isSignedIn()
+                    && request.auth.uid == userId;
+
+      allow delete: if isSignedIn()
+                    && request.auth.uid == userId;
+    }
+
+    match /libraries/{libraryId} {
+      allow read: if isSignedIn();
+
+      allow update: if isSignedIn()
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly([
+                           'occupiedSeats',
+                           'checkedInUsers'
+                         ]);
+
+      allow create, delete: if false;
+    }
+
+    match /visitHistory/{recordId} {
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow read: if isSignedIn()
+                  && resource.data.userId == request.auth.uid;
+
+      allow update: if isSignedIn()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow delete: if false;
+    }
+
+    match /crowdData/{documentId} {
+      allow read: if isSignedIn();
+
+      allow create, update: if isSignedIn();
+
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
