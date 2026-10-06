@@ -1,22 +1,22 @@
-# LibraSpace
-
-LibraSpace is a Flutter mobile application that helps students find available library spaces and see the current occupancy of different libraries.
-
-The application uses Firebase for authentication, user profiles, library information, visit history and other application data.
+LibraSpace is a Flutter mobile application that helps students find available library spaces, view live occupancy, compare nearby libraries, and make better decisions about where and when to study.
 
 ## Main Features
 
-- Create an account using email and password
-- Sign in and sign out
-- View available libraries
-- View the number of free seats in each library
-- View whether a library is available or full
-- View library information
-- View crowd/heatmap information
-- View visit history
-- View user profile information
-- Scan QR codes for check-in and check-out
-- Delete an account securely by confirming the user's password
+- Email/password account creation and sign-in
+- Live library seat availability
+- Total, occupied and free seat counts
+- Smart library recommendation based on distance and current availability
+- Sort by distance or by most available space
+- Filter to show only libraries with free seats
+- Live occupancy heatmap
+- Historical crowd patterns and “Best time today”
+- “I’m heading here” live destination monitoring
+- In-app warning if the selected library becomes full
+- Alternative-library suggestion when a destination fills up
+- QR check-in/check-out
+- Visit history
+- User profile
+- Secure account deletion with password confirmation
 
 ## Technologies Used
 
@@ -24,185 +24,216 @@ The application uses Firebase for authentication, user profiles, library informa
 - Dart
 - Firebase Authentication
 - Cloud Firestore
-- Firebase Cloud Messaging
-- Firebase Cloud Functions
+- Firebase Cloud Messaging package
 - Provider
 - Geolocator
 - Mobile Scanner
 
-## Requirements
+> **Note:** Firebase Cloud Functions source code is included in the repository, but deployed Cloud Functions are not required to run the Android application.
 
-Before running the project, make sure the following are installed:
+## Tested Environment
 
-- Flutter
-- Dart
-- Android Studio
-- Android SDK
-- Android Emulator
-- Git
-
-The project was successfully tested using:
+LibraSpace was successfully tested using:
 
 - Flutter 3.44.2
 - Dart 3.12.2
+- Android 15 / API 35
+- Android Studio Emulator
+- Windows 10
 
-To check your Flutter installation, run:
+A completely fresh clone of this GitHub repository was tested successfully before submission.
+
+## Requirements
+
+Install the following before running the project:
+
+- Git
+- Flutter SDK
+- Android Studio
+- Android SDK
+- Android Emulator
+
+Check the Flutter setup:
 
 ```bash
-flutter doctor
+flutter doctor -v
 ```
 
-Fix any Android-related problems shown by Flutter Doctor before continuing.
+Resolve any important Android toolchain or SDK errors before continuing.
 
-## How to Download the Project
+## Quick Start
 
-Open a terminal and run:
+Clone the repository:
 
 ```bash
 git clone https://github.com/bb-benjamin/libraspace.git
-```
-
-Then enter the project folder:
-
-```bash
 cd libraspace
 ```
 
-## Install the Flutter Packages
-
-Run:
+Install Flutter packages:
 
 ```bash
 flutter pub get
 ```
 
-Wait until Flutter shows:
+You should see:
 
 ```text
 Got dependencies!
 ```
 
-Some packages may show that newer versions are available. This does not stop the application from running.
+Start an Android emulator from **Android Studio > Device Manager**.
 
-## Start an Android Emulator
-
-Open Android Studio.
-
-Go to Device Manager and start an Android virtual device.
-
-For example:
-
-```text
-Pixel 6
-```
-
-Wait until the Android emulator has completely opened.
-
-To check that Flutter can see the emulator, run:
+Check that Flutter can see the emulator:
 
 ```bash
 flutter devices
 ```
 
-An Android device should appear in the list.
-
-## Run LibraSpace
-
-Run:
+Run LibraSpace:
 
 ```bash
 flutter run
 ```
 
-If more than one device is available, you can run the application on a specific Android emulator.
+If multiple devices are available, use the Android device ID shown by `flutter devices`.
 
-For example:
+Example:
 
 ```bash
 flutter run -d emulator-5554
 ```
 
-The application should build, install and open automatically on the Android emulator.
+> The exact emulator ID may be different on another computer.
 
-## First Time Use
+## Optional Verification
 
-When LibraSpace opens, you will see:
+Run the Flutter analyzer:
 
-- Sign In
-- Create Account
-
-For a new user, select:
-
-```text
-Create Account
+```bash
+flutter analyze
 ```
 
-Enter the required information and create an account.
+The current project may show informational lint messages such as `const` suggestions or deprecated styling warnings. These do not prevent the application from building or running.
 
-LibraSpace will create the user's Firebase Authentication account and save the user's profile information in Cloud Firestore.
+Run the automated test:
+
+```bash
+flutter test
+```
+
+The repository was tested successfully with:
+
+```text
+All tests passed!
+```
+
+Build a debug APK:
+
+```bash
+flutter build apk --debug
+```
+
+A successful build creates:
+
+```text
+build/app/outputs/flutter-apk/app-debug.apk
+```
+
+## First-Time Use
+
+When LibraSpace opens, select either:
+
+- **Sign In**
+- **Create Account**
+
+A new account is created through Firebase Authentication, while profile information is stored in Cloud Firestore.
+
+An internet connection is required for Firebase-backed features.
 
 ## Firebase
 
 LibraSpace uses Firebase for:
 
-- User authentication
+- Authentication
 - User profiles
-- Library information
+- Live library information
 - Visit history
-- Notifications
-- Cloud Functions
+- Historical crowd data
+- Real-time Firestore updates
 
-The Android Firebase configuration is already included in the project.
+The Android Firebase configuration required to run the existing project is already included in the repository.
 
-An internet connection is required for Firebase features to work.
+A separate Firebase setup is not required simply to run the Android application.
 
-## Firebase Cloud Functions
+## “I’m Heading Here” Live Monitoring
 
-Firebase Cloud Functions are located inside:
+When a student opens a library that still has space, they can tap:
 
 ```text
-functions/
+I'm heading here
 ```
 
-If the Cloud Functions need to be edited or deployed, Node.js and Firebase CLI will also be required.
+While LibraSpace is running, the app continues to monitor that library using live Firestore data.
 
-To install the Function packages:
+If the selected library changes from having space to being full, LibraSpace automatically:
 
-```bash
-cd functions
-npm install
-cd ..
-```
+1. Warns the student that the library is now full.
+2. Suggests another library that currently has available seats.
 
-This is normally not required just to run the Flutter Android application.
+This means the student does not need to remain on the library detail page and repeatedly check the seat count.
+
+### Prototype Limitation
+
+The current implementation provides live monitoring while LibraSpace is running.
+
+For a production version that must deliver an alert after the app has been completely closed or suspended, a server-side push-notification service such as Firebase Cloud Functions with Firebase Cloud Messaging would be required.
+
+## Crowd Prediction
+
+LibraSpace stores historical check-in information by:
+
+- Library
+- Day of the week
+- Hour of the day
+
+The app uses this data to show:
+
+- Typical hourly busyness
+- Current historical crowd insight
+- A **Best time today** suggestion based on quieter recorded periods
+
+This is historical-pattern analysis, not an AI prediction model.
+
+## Smart Library Recommendation
+
+The Home screen recommends a library using a rule-based score based on:
+
+- Current seat availability
+- Distance from the user
+
+Availability is given more weight than distance.
+
+During debug/emulator testing, if GPS information cannot be obtained, the project uses a debug-only fallback location near KNUST so the location-based features can still be demonstrated.
 
 ## Important Project Folders
 
 ```text
 libraspace/
-│
 ├── android/          Android configuration
 ├── assets/           Application assets
-├── functions/        Firebase Cloud Functions
+├── functions/        Firebase Cloud Functions source code
 ├── lib/              Main Flutter source code
 ├── test/             Flutter tests
-├── pubspec.yaml      Flutter packages
-├── pubspec.lock      Package versions
+├── pubspec.yaml      Flutter package configuration
+├── pubspec.lock      Locked package versions
 ├── firebase.json     Firebase configuration
 └── README.md         Project instructions
 ```
 
-Most of the application code is inside:
+## Generated Files Not Stored on GitHub
 
-```text
-lib/
-```
-
-## Files That Are Not Stored on GitHub
-
-Some files and folders are created automatically by Flutter, Android Studio or Node.js and therefore are not stored on GitHub.
-
-Examples include:
+The following are intentionally not stored in GitHub because Flutter, Gradle, Android Studio or Node.js generate them automatically:
 
 ```text
 .dart_tool/
@@ -213,35 +244,27 @@ functions/node_modules/
 .flutter-plugins-dependencies
 ```
 
-This is normal.
+Do not recreate them manually.
 
-Flutter recreates the required files when you run:
-
-```bash
-flutter pub get
-```
-
-## Common Problems
+## Troubleshooting
 
 ### Flutter command is not recognized
 
 Run:
 
 ```bash
-flutter doctor
+flutter doctor -v
 ```
 
-If the command does not work, Flutter may not be installed correctly or may not be added to the system PATH.
+If the command itself is not found, Flutter may not be installed correctly or its `bin` folder may not be in the system PATH.
 
-### No Android device found
+### No Android device is found
 
-Run:
+Start an emulator from Android Studio, then run:
 
 ```bash
 flutter devices
 ```
-
-If no Android device appears, start an Android emulator from Android Studio.
 
 ### Packages are missing
 
@@ -251,9 +274,24 @@ Run:
 flutter pub get
 ```
 
-### Build problems
+### Many red errors appear immediately after cloning
+
+Do not fix every editor error one by one.
 
 Run:
+
+```bash
+flutter pub get
+flutter doctor -v
+```
+
+Then restart the editor if necessary.
+
+One missing SDK, package restore or Android toolchain component can produce many secondary errors.
+
+### Build fails while downloading Gradle/Android dependencies
+
+Check the internet connection, then run:
 
 ```bash
 flutter clean
@@ -261,43 +299,87 @@ flutter pub get
 flutter run
 ```
 
-### Firebase information does not load
+### Firebase data does not load
 
-Make sure the computer has an active internet connection.
+Check that:
 
-## Testing
+- The computer has an internet connection.
+- The project is being run as the Android application.
+- Firebase Authentication and Firestore are reachable.
+- The user is signed in where required.
 
-A fresh copy of this GitHub repository was tested using the following process:
+### Emulator location behaves strangely
+
+Android emulators may not always provide reliable GPS information.
+
+In debug mode, LibraSpace includes a KNUST-area fallback location for demonstration/testing if GPS retrieval fails.
+
+## Fresh-Clone Verification Performed Before Submission
+
+The repository was tested from a completely separate folder using this sequence:
 
 ```text
-Clone repository
-      ↓
+git clone
+↓
+git status
+↓
 flutter pub get
-      ↓
+↓
+flutter analyze
+↓
+flutter test
+↓
+flutter build apk --debug
+↓
 Start Android emulator
-      ↓
+↓
+flutter devices
+↓
 flutter run
-      ↓
-Application builds
-      ↓
-Application installs
-      ↓
-LibraSpace opens successfully
+↓
+Sign in
+↓
+Firebase data loads
+↓
+Test Home, Library Details, Crowd Prediction, Heatmap, History and Profile
 ```
 
-The following features were tested successfully:
+The fresh clone successfully:
 
-- Account creation
-- Sign in
-- Sign out
-- Profile information
-- Library information
-- Library availability
-- Firebase connection
-- Account deletion using password confirmation
+- Downloaded dependencies
+- Passed the Flutter test
+- Built a debug Android APK
+- Installed on an Android 15 / API 35 emulator
+- Opened successfully
+- Connected to Firebase
+- Loaded library data
+- Loaded crowd prediction data
+- Loaded the Heatmap
+- Loaded visit history
+- Loaded the user profile
+
+## Supervisor / Marker Quick Start
+
+For the fastest setup:
+
+```bash
+git clone https://github.com/bb-benjamin/libraspace.git
+cd libraspace
+flutter pub get
+flutter devices
+flutter run
+```
+
+If the application does not start, run:
+
+```bash
+flutter doctor -v
+```
+
+before modifying the source code.
 
 ## Important Note
 
-LibraSpace should currently be run as an Android application.
+LibraSpace should currently be evaluated as an **Android application**.
 
-Although Flutter includes folders for Windows, Linux, macOS, iOS and Web, the Firebase configuration for this project has been set up and tested for Android.
+Although Flutter projects can contain folders for Windows, Linux, macOS, iOS and Web, this project has been configured and tested primarily for Android.
