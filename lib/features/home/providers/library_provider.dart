@@ -11,9 +11,10 @@
 //
 // The Home Screen and Heatmap Screen both read from this provider.
 // ═══════════════════════════════════════════════════
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'dart:async';
 import 'dart:math' as math;
 // dart:math gives us mathematical functions:
 // math.sin, math.cos, math.sqrt, math.atan2, math.pi
@@ -31,6 +32,8 @@ enum SortMode {
 
 class LibraryProvider extends ChangeNotifier {
   final FirebaseService _service = FirebaseService();
+
+  StreamSubscription<List<LibraryModel>>? _librarySubscription;
 
   // PRIVATE STATE
   List<LibraryModel> _allLibraries = []; // raw list from Firebase (unsorted)
@@ -83,17 +86,79 @@ class LibraryProvider extends ChangeNotifier {
   // ── startListening() ────────────────────────────────
   // Called ONCE from MainShell when the app first loads.
   // Kicks off both Firebase listening and GPS location fetching.
+  // ── SMART RECOMMENDATION ───────────────────────────
+  // Chooses the best library based on:
+  // 1. It must have free seats
+  // 2. More free seats is better
+  // 3. Shorter distance is better
+  LibraryModel? get recommendedLibrary {
+    // Keep only libraries that still have space
+    final availableLibraries = _allLibraries
+        .where((library) => library.hasSpace)
+        .toList();
+
+    if (availableLibraries.isEmpty) {
+      return null;
+    }
+
+    // If GPS is not available yet, simply recommend
+    // the library with the most free seats.
+    if (_userPosition == null) {
+      availableLibraries.sort((a, b) => b.freeSeats.compareTo(a.freeSeats));
+
+      return availableLibraries.first;
+    }
+
+    LibraryModel bestLibrary = availableLibraries.first;
+    double bestScore = double.negativeInfinity;
+
+    for (final library in availableLibraries) {
+      final double distanceKm = _haversineKm(
+        library.latitude,
+        library.longitude,
+      );
+
+      // Availability percentage:
+      // Example: 80 free out of 100 = 0.80
+      final double availabilityRatio = library.totalSeats > 0
+          ? library.freeSeats / library.totalSeats
+          : 0.0;
+
+      // Distance score:
+      // Closer libraries get a higher value.
+      final double distanceScore = 1 / (1 + distanceKm);
+
+      // Final score:
+      // Availability matters slightly more than distance.
+      final double score = (availabilityRatio * 0.65) + (distanceScore * 0.35);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestLibrary = library;
+      }
+    }
+
+    return bestLibrary;
+  }
+
   void startListening() {
     _fetchGpsLocation();
     _listenToLibraries();
   }
 
   void _listenToLibraries() {
-    _service.watchAllLibraries().listen(
+    // Cancel any old listener before starting a new one.
+    _librarySubscription?.cancel();
+
+    _librarySubscription = _service.watchAllLibraries().listen(
       (List<LibraryModel> freshList) {
         _allLibraries = freshList;
+
+        // Clear any old permission/network error after data loads again.
+        _errorMessage = null;
+
         _isLoading = false;
-        notifyListeners(); // all screens rebuild with new data
+        notifyListeners();
       },
       onError: (_) {
         _errorMessage = 'Could not load libraries. Check your connection.';
@@ -103,29 +168,54 @@ class LibraryProvider extends ChangeNotifier {
     );
   }
 
+  void stopListening() {
+    _librarySubscription?.cancel();
+    _librarySubscription = null;
+  }
+
   Future<void> _fetchGpsLocation() async {
     try {
-      // First check what permission we currently have
       LocationPermission permission = await Geolocator.checkPermission();
 
-      // If denied, ask the student for permission
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
 
-      // If we now have permission, get the actual GPS coordinates
       if (permission == LocationPermission.whileInUse ||
           permission == LocationPermission.always) {
         _userPosition = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.medium,
           ),
-        );
-        notifyListeners(); // rebuild — we can now show real distances
+        ).timeout(const Duration(seconds: 5));
+
+        notifyListeners();
       }
-    } catch (_) {
-      // Location failed — the app still works perfectly.
-      // Libraries will just show "--" for distance instead of "1.2 km".
+    } catch (e) {
+      debugPrint('LIBRASPACE GPS ERROR: $e');
+
+      // DEBUG/EMULATOR FALLBACK ONLY.
+      // This is never used in a release build.
+      if (kDebugMode) {
+        _userPosition = Position(
+          latitude: 6.67450,
+          longitude: -1.57120,
+          timestamp: DateTime.now(),
+          accuracy: 5.0,
+          altitude: 0.0,
+          altitudeAccuracy: 0.0,
+          heading: 0.0,
+          headingAccuracy: 0.0,
+          speed: 0.0,
+          speedAccuracy: 0.0,
+        );
+
+        debugPrint(
+          'LIBRASPACE DEBUG: Using KNUST fallback location 6.67450, -1.57120',
+        );
+
+        notifyListeners();
+      }
     }
   }
 

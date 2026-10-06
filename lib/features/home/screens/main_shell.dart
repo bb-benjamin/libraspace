@@ -30,6 +30,12 @@ class _MainShellState extends State<MainShell> {
   }
 
   @override
+  void dispose() {
+    context.read<LibraryProvider>().stopListening();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _selectedTab, children: _screens),

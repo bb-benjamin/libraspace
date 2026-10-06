@@ -94,6 +94,7 @@ class HomeScreen extends StatelessWidget {
 
           // Get the processed library list (filtered and sorted)
           final libraries = provider.displayLibraries;
+          final recommendedLibrary = provider.recommendedLibrary;
 
           return Column(
             children: [
@@ -135,22 +136,157 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // Library count
+              // ── SMART RECOMMENDATION CARD ───────────────────
+              if (recommendedLibrary != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary.withOpacity(0.12),
+                          AppColors.primary.withOpacity(0.04),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.25),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(
+                              Icons.auto_awesome,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Recommended for you',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Text(
+                          recommendedLibrary.title,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.event_seat_outlined,
+                              size: 16,
+                              color: Colors.green.shade700,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              '${recommendedLibrary.freeSeats} seats available',
+                              style: TextStyle(
+                                color: Colors.green.shade700,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+
+                            const SizedBox(width: 16),
+
+                            const Icon(
+                              Icons.near_me_outlined,
+                              size: 16,
+                              color: AppColors.textGrey,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              provider.getDistanceLabel(recommendedLibrary),
+                              style: const TextStyle(
+                                color: AppColors.textGrey,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        const Text(
+                          'Best balance of distance and current seat availability.',
+                          style: TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              // Library count + live status
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 10,
                 ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '${libraries.length} ${libraries.length == 1 ? "library" : "libraries"} found',
-                    // Shows "1 library" or "3 libraries" (correct grammar)
-                    style: const TextStyle(
-                      color: AppColors.textGrey,
-                      fontSize: 13,
+                child: Row(
+                  children: [
+                    Text(
+                      '${libraries.length} ${libraries.length == 1 ? "library" : "libraries"} found',
+                      style: const TextStyle(
+                        color: AppColors.textGrey,
+                        fontSize: 13,
+                      ),
                     ),
-                  ),
+
+                    const Spacer(),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.green.withOpacity(0.35),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.circle, size: 8, color: Colors.green),
+                          SizedBox(width: 6),
+                          Text(
+                            'LIVE',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
