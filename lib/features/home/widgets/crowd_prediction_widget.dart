@@ -153,19 +153,42 @@ class _CrowdPredictionWidgetState extends State<CrowdPredictionWidget> {
             children: [
               const Icon(Icons.query_stats, color: AppColors.primary, size: 22),
               const SizedBox(width: 8),
-              Text(
-                'Crowd Prediction — ${_dayName(today)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: AppColors.textDark,
+              Expanded(
+                child: Text(
+                  'Crowd Prediction — ${_dayName(today)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColors.textDark,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Historical insight',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 5),
 
+          const Text(
+            'Based on historical student check-ins for this day.',
+            style: TextStyle(fontSize: 11, color: AppColors.textGrey),
+          ),
+
+          const SizedBox(height: 12),
           // ── LOADING STATE ───────────────────────────────
           if (_loading)
             const Center(
