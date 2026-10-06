@@ -12,6 +12,8 @@ import '../../../shared/theme/app_theme.dart';
 import 'qr_scanner_screen.dart';
 import '../widgets/announcement_banner.dart';
 import '../widgets/crowd_prediction_widget.dart';
+import 'package:provider/provider.dart';
+import '../providers/library_provider.dart';
 
 class LibraryDetailScreen extends StatelessWidget {
   // We receive the selected library from the Home Screen
@@ -114,7 +116,67 @@ class LibraryDetailScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+
+                  // ── HEADING TO LIBRARY BUTTON ───────────────
+                  // The student taps this when they decide to travel to this library.
+                  // In the next stage, we will connect it to the live occupancy monitor.
+                  Consumer<LibraryProvider>(
+                    builder: (context, provider, _) {
+                      final bool isThisLibraryBeingMonitored =
+                          provider.headingToLibraryId == library.libraryId;
+
+                      return Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              icon: Icon(
+                                isThisLibraryBeingMonitored
+                                    ? Icons.check_circle
+                                    : Icons.directions_walk_rounded,
+                              ),
+                              label: Text(
+                                isThisLibraryBeingMonitored
+                                    ? 'Monitoring ${library.shortName}'
+                                    : "I'm heading here",
+                              ),
+                              onPressed: library.hasSpace
+                                  ? () {
+                                      if (isThisLibraryBeingMonitored) {
+                                        provider.stopHeadingTo();
+
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Stopped monitoring ${library.title}.',
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        provider.startHeadingTo(library);
+
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Monitoring ${library.title} while you are on your way.',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
 
                   // ── QR CHECK-IN BUTTON ──────────────────────
                   SizedBox(

@@ -42,6 +42,10 @@ class LibraryProvider extends ChangeNotifier {
   bool _showOnlyAvailable = false; // filter toggle (off by default)
   bool _isLoading = true; // true until first Firebase data arrives
   String? _errorMessage; // any error message, or null
+  // ── HEADING TO A LIBRARY ─────────────────────────────
+  // Stores the ID of the library the student says they are travelling to.
+  // null means the student is not currently heading to any library.
+  String? _headingToLibraryId;
 
   // PUBLIC GETTERS — screens read these
   SortMode get sortMode => _sortMode;
@@ -49,6 +53,22 @@ class LibraryProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   Position? get userPosition => _userPosition;
+  String? get headingToLibraryId => _headingToLibraryId;
+
+  bool get isHeadingToLibrary => _headingToLibraryId != null;
+
+  // Returns the latest live version of the library the student is heading to.
+  LibraryModel? get headingToLibrary {
+    if (_headingToLibraryId == null) return null;
+
+    for (final library in _allLibraries) {
+      if (library.libraryId == _headingToLibraryId) {
+        return library;
+      }
+    }
+
+    return null;
+  }
 
   // ── displayLibraries ────────────────────────────────
   // This is what the Home Screen and Heatmap ACTUALLY display.
@@ -217,6 +237,20 @@ class LibraryProvider extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  // ── HEADING TO LIBRARY ACTIONS ───────────────────────
+
+  // Called when the student taps "I'm heading here".
+  void startHeadingTo(LibraryModel library) {
+    _headingToLibraryId = library.libraryId;
+    notifyListeners();
+  }
+
+  // Called when the student changes their mind or arrives.
+  void stopHeadingTo() {
+    _headingToLibraryId = null;
+    notifyListeners();
   }
 
   // ── Toggle actions — called when student taps buttons ──
