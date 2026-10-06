@@ -219,7 +219,7 @@ class FirebaseService {
     // FieldValue.increment(1) adds 1 to a number in Firestore.
     // If the field does not exist yet, it creates it with value 1.
     // We use the hour number as the field name, e.g. 'h14' = 2pm.
-    await _db.collection('crowdData').doc(docId).set(
+    await _db.collection('crowedData').doc(docId).set(
       {'h$hour': FieldValue.increment(1), 'libraryId': libraryId},
       SetOptions(merge: true),
       // SetOptions(merge: true) = update existing fields, do NOT replace the doc.
@@ -234,7 +234,11 @@ class FirebaseService {
     required int dayOfWeek,
   }) async {
     final String docId = '${libraryId}_day${dayOfWeek}';
-    final doc = await _db.collection('crowdData').doc(docId).get();
+
+    final doc = await _db
+        .collection('crowedData')
+        .doc(docId)
+        .get(const GetOptions(source: Source.server));
 
     if (!doc.exists) return {}; // no data yet — return empty map
 

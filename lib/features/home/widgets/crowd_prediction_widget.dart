@@ -42,18 +42,29 @@ class _CrowdPredictionWidgetState extends State<CrowdPredictionWidget> {
   }
 
   Future<void> _loadData() async {
-    // Get today's day of the week (1=Monday, 7=Sunday)
-    final int today = DateTime.now().weekday;
+    try {
+      final int today = DateTime.now().weekday;
 
-    final data = await _service.getCrowdData(
-      libraryId: widget.libraryId,
-      dayOfWeek: today,
-    );
+      final data = await _service.getCrowdData(
+        libraryId: widget.libraryId,
+        dayOfWeek: today,
+      );
 
-    setState(() {
-      _hourlyData = data;
-      _loading = false;
-    });
+      if (!mounted) return;
+
+      setState(() {
+        _hourlyData = data;
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint('CROWD DEBUG ERROR: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   // Convert a day number to a short name
@@ -98,10 +109,31 @@ class _CrowdPredictionWidgetState extends State<CrowdPredictionWidget> {
     return '🔴 Usually busy — consider going earlier or later';
   }
 
+  int? _getBestHour(Map<int, int> data) {
+    if (data.isEmpty) return null;
+
+    int? bestHour;
+    int? lowestVisits;
+
+    for (int hour = 6; hour <= 22; hour++) {
+      if (!data.containsKey(hour)) continue;
+
+      final int visits = data[hour]!;
+
+      if (lowestVisits == null || visits < lowestVisits) {
+        lowestVisits = visits;
+        bestHour = hour;
+      }
+    }
+
+    return bestHour;
+  }
+
   @override
   Widget build(BuildContext context) {
     final int today = DateTime.now().weekday;
     final int currentHour = DateTime.now().hour;
+    final int? bestHour = _getBestHour(_hourlyData);
 
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -181,6 +213,63 @@ class _CrowdPredictionWidgetState extends State<CrowdPredictionWidget> {
             ),
 
             const SizedBox(height: 16),
+
+            if (bestHour != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.20),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.schedule,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Best time today',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${_hourLabel(bestHour)} – ${_hourLabel(bestHour + 1)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          const Text(
+                            'Historically one of the quieter recorded times to visit.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // ── HOURLY BAR CHART ──────────────────────────
             // Shows bars for typical busy hours during the day.

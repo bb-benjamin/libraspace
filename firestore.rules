@@ -49,7 +49,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    match /crowdData/{documentId} {
+    match /crowedData/{documentId} {
       allow read: if isSignedIn();
 
       allow create, update: if isSignedIn();
