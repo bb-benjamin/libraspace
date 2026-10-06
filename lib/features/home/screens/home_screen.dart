@@ -108,13 +108,35 @@ class HomeScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     // Shows what the current sort is
-                    Text(
-                      provider.sortMode == SortMode.byDistance
-                          ? '📍 Sorted by distance'
-                          : '💺 Sorted by most space',
-                      style: const TextStyle(
-                        color: AppColors.textGrey,
-                        fontSize: 13,
+                    InkWell(
+                      onTap: () => provider.toggleSortMode(),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 6,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              provider.sortMode == SortMode.byDistance
+                                  ? '📍 Sorted by distance'
+                                  : '💺 Sorted by most space',
+                              style: const TextStyle(
+                                color: AppColors.textGrey,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.swap_vert,
+                              size: 15,
+                              color: AppColors.textGrey,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const Spacer(),
